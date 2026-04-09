@@ -8,6 +8,35 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: leogloriainfnet/ufodb:1.0-win
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: devops2025!
+          POSTGRES_DB: ufology
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ufology"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: devops2025!
+      DB_HOST: localhost
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
     steps:
       - name: Checkout
         uses: actions/checkout@v5
