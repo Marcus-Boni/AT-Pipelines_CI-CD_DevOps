@@ -1,0 +1,13 @@
+name: tests
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Rodar testes
+        run: echo "Rodando testes"

@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ufology
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ufology-postgres
+  namespace: ufology
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ufology-postgres
+  template:
+    metadata:
+      labels:
+        app: ufology-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: leogloriainfnet/ufodb:1.0-win
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: devops2025!
+            - name: POSTGRES_DB
+              value: ufology
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: ufology
+spec:
+  type: ClusterIP
+  selector:
+    app: ufology-postgres
+  ports:
+    - name: postgres
+      protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ufology-redis
+  namespace: ufology
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ufology-redis
+  template:
+    metadata:
+      labels:
+        app: ufology-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: ufology
+spec:
+  type: ClusterIP
+  selector:
+    app: ufology-redis
+  ports:
+    - name: redis
+      protocol: TCP
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: ufology
+data:
+  DB_NAME: ufology
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: ufology
+type: Opaque
+stringData:
+  DB_PASSWORD: devops2025!
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ufology-app
+  namespace: ufology
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ufology-app
+  template:
+    metadata:
+      labels:
+        app: ufology-app
+    spec:
+      containers:
+        - name: ufology-app
+          image: docker.io/marcusblz/ufotracker:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: postgres
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: POSTGRES_USERNAME
+              value: postgres
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_NAME
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: DB_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ufology-app
+  namespace: ufology
+spec:
+  type: ClusterIP
+  selector:
+    app: ufology-app
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080

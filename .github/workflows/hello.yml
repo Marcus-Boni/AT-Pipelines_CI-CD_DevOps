@@ -1,0 +1,11 @@
+name: hello
+
+on:
+  push:
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mensagem de CI
+        run: echo "Hello CI/CD"

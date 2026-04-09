@@ -1,0 +1,17 @@
+name: gradle-ci
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Permissao do Maven Wrapper
+        run: chmod +x mvnw
+      - name: Build (simulando gradle com maven)
+        run: ./mvnw -B clean verify
